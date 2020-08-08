@@ -1,32 +1,41 @@
-
+// (255,165,0)
 internal void
 RenderGradient(game_back_buffer* backBuffer,
                u16 xOffset, u16 yOffset)
 {
     u8* row = (u8*)backBuffer->bitmapMemory;
-    
+
     for(u16 y = 0; y < backBuffer->height; ++y)
     {
         u32* pixel = (u32*)row;
         for(u16 x = 0; x < backBuffer->width; ++x)
         {
-            u8 green = y + yOffset;
-            u8 blue = x + xOffset;
-            *pixel++ = green << 8 | blue;
+	    u8 red = 255;
+            u8 green = 165;
+            u8 blue = 0;
+            *pixel++ = red << 16 | green << 8 | blue;
         }
-		row += backBuffer->pitch;
+	row += backBuffer->pitch;
     }
 }
 
 internal void 
-GameUpdateAndRender(game_back_buffer* backBuffer)
+GameUpdateAndRender(game_memory* memory,
+		    game_back_buffer* backBuffer)
 {
-    local_persist u16 xOffset;
-    local_persist u16 yOffset;
-    
+    game_state* gameState = (game_state*)memory->permanentStorage;
+
+    if (!memory->isInitialized)
+    {
+	gameState->xOffset = 0;
+	gameState->yOffset = 0;
+
+	memory->isInitialized = 1;
+    }
+
     RenderGradient(backBuffer,
-                   xOffset, yOffset);
-	
-    ++xOffset;
-    ++yOffset;
+                   gameState->xOffset, gameState->yOffset);
+
+    ++gameState->xOffset;
+    ++gameState->yOffset;
 }

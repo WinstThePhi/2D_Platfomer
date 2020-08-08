@@ -11,7 +11,7 @@
 
 global b8 isRunning;
 global back_buffer backBuffer;
-
+ 
 internal client_dimension
 GetClientDimension(HWND window)
 {
@@ -19,7 +19,7 @@ GetClientDimension(HWND window)
     GetClientRect(window, &clientRect);
     
     client_dimension dimensions;
-    
+
     dimensions.height = clientRect.bottom - clientRect.top;
     dimensions.width = clientRect.right - clientRect.left;
     
@@ -94,63 +94,63 @@ Win32MainWindowCallback(HWND window,
             u32 VKcode = wParam;
             bool wasDown = ((lParam & (1 << 30)) != 0);
             bool isDown = ((lParam & (1 << 31)) == 0);
-            if(isDown != wasDown)
+            if (isDown != wasDown)
             {
-                if(VKcode == 'W')
+                if (VKcode == 'W')
                 {
-					printf("Hi");
+
                 }
-                else if(VKcode == 'A')
+                else if (VKcode == 'A')
+                {
+
+                }
+                else if (VKcode == 'S')
+                {
+
+                }
+                else if (VKcode == 'D')
+                {
+
+                }
+                else if (VKcode == 'Q')
                 {
                     
                 }
-                else if(VKcode == 'S')
+                else if (VKcode == VK_UP)
                 {
                     
                 }
-                else if(VKcode == 'D')
+                else if (VKcode == VK_LEFT)
                 {
                     
                 }
-                else if(VKcode == 'Q')
+                else if (VKcode == VK_DOWN)
                 {
                     
                 }
-                else if(VKcode == VK_UP)
+                else if (VKcode == VK_RIGHT)
                 {
                     
                 }
-                else if(VKcode == VK_LEFT)
+                else if (VKcode == VK_ESCAPE)
                 {
-                    
-                }
-                else if(VKcode == VK_DOWN)
-                {
-                    
-                }
-                else if(VKcode == VK_RIGHT)
-                {
-                    
-                }
-                else if(VKcode == VK_ESCAPE)
-                {
-                    if(isDown)
+                    if (isDown)
                     {
                         OutputDebugStringA("Escape key is down!\n");
                     }
-                    else if(wasDown)
+                    else if (wasDown)
                     {
                         OutputDebugStringA("Escape key was down!\n");
                     }
                 }
-                else if(VKcode == VK_SPACE)
+                else if (VKcode == VK_SPACE)
                 {
                     
                 }
             }
-            
+
             b32 altKeyDown = (lParam & (1 << 29));
-            if(VKcode == VK_F4 && altKeyDown)
+            if (VKcode == VK_F4 && altKeyDown)
             {
                 isRunning = 0;
             }
@@ -183,7 +183,7 @@ int WinMain(HINSTANCE hInstance,
     windowClass.lpszClassName = "HandmadeHero";
     windowClass.hCursor = LoadCursor(0, IDC_ARROW);
     
-    if(RegisterClassA(&windowClass))
+    if (RegisterClassA(&windowClass))
     {
         HWND window = CreateWindowEx(0,
                                      "HandmadeHero",
@@ -197,7 +197,7 @@ int WinMain(HINSTANCE hInstance,
                                      0,
                                      hInstance,
                                      0);
-        if(window)
+        if (window)
         {
             isRunning = 1;
             
@@ -210,50 +210,61 @@ int WinMain(HINSTANCE hInstance,
             gameBackBuffer.pitch = backBuffer.pitch;
             gameBackBuffer.width = backBuffer.width;
             gameBackBuffer.height = backBuffer.height;
-            
-            while(isRunning)
-            {
-                MSG message;
-                while(PeekMessage(&message, window, 0, 0, PM_REMOVE))
-                {
-                    if(message.message == WM_QUIT)
-                    {
-                        isRunning = 0;
-                    }
-                    TranslateMessage(&message);
-                    DispatchMessage(&message);
-                }
+
+	    game_memory memory = {};
+	    memory.permanentStorageSize = Megabytes(64);
+	    memory.permanentStorage =
+		VirtualAlloc(0,
+			     memory.permanentStorageSize,
+			     MEM_RESERVE | MEM_COMMIT,
+			     PAGE_READWRITE);
+
+	    if (memory.permanentStorage)
+	    {
+		while (isRunning)
+		{
+		    MSG message;
+		    while (PeekMessage(&message, window, 0, 0, PM_REMOVE))
+		    {
+			if (message.message == WM_QUIT)
+			{
+			    isRunning = 0;
+			}
+			TranslateMessage(&message);
+			DispatchMessage(&message);
+		    }
                 
-                GameUpdateAndRender(&gameBackBuffer);
+		    GameUpdateAndRender(&memory,
+					&gameBackBuffer);
                 
-                HDC hdc = GetDC(window);
-                client_dimension dimension = GetClientDimension(window);
+		    HDC hdc = GetDC(window);
+		    client_dimension dimension = GetClientDimension(window);
                 
-                Win32UpdateWindow(hdc,
-                                  &backBuffer,
-                                  dimension.width, dimension.height);
+		    Win32UpdateWindow(hdc,
+				      &backBuffer,
+				      dimension.width, dimension.height);
                 
-                ReleaseDC(window, hdc);
+		    ReleaseDC(window, hdc);
                 
-                LARGE_INTEGER endCounter;
-                QueryPerformanceCounter(&endCounter);
+		    LARGE_INTEGER endCounter;
+		    QueryPerformanceCounter(&endCounter);
                 
-                i64 timeElapsed = endCounter.QuadPart - lastCounter.QuadPart;
+		    i64 timeElapsed = endCounter.QuadPart - lastCounter.QuadPart;
                 
-                f32 msPerFrame = (1000.0f * (f32)timeElapsed) / (f32)performanceFrequency;
+		    f32 msPerFrame = (1000.0f * (f32)timeElapsed) / (f32)performanceFrequency;
                 
 #if 0
-                char buffer[256];
-                sprintf(buffer, "Milliseconds/frame %f ms\n", msPerFrame);
+		    char buffer[256];
+		    sprintf(buffer, "Milliseconds/frame %f ms\n", msPerFrame);
                 
-                OutputDebugStringA(buffer);
+		    OutputDebugStringA(buffer);
 #endif
-                if(msPerFrame < 16.667)
-                    Sleep(16.667 - msPerFrame);
+		    if (msPerFrame < 16.667)
+			Sleep(16.667 - msPerFrame);
                 
-                lastCounter = endCounter;
+		    lastCounter = endCounter;
+		}
             }
-            
             DestroyWindow(window);
         }
         else
