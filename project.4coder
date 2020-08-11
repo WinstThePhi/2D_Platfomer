@@ -1,0 +1,54 @@
+version(1);
+
+project_name = "Handmade Hero";
+
+patterns = {
+"*.cpp",
+"*.c",
+"*.h",
+"*.bat",
+"*.sh",
+"*.4coder",
+"Makefile",
+};
+
+blacklist_patterns = {
+".*",
+};
+
+load_paths = {
+ { { {".", .relative = true, .recursive = true, } }, .os = "win" },
+ { { {".", .relative = true, .recursive = true, } }, .os = "linux" },
+ { { {".", .relative = true, .recursive = true, } }, .os = "mac" },
+};
+
+command_list = {
+{ .name = "reload",
+   .out = "*reload*", .footer_panel = true, .save_dirty_files = true, .cursor_at_end = true,
+   .cmd = {
+          {"reload.bat", .os = "win"},
+          {"make -j8", .os = "linux"},
+          {"./game", .os = "mac"},
+   },
+ }, 
+{ .name = "build",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true, .cursor_at_end = false,
+   .cmd = {
+          {"build", .os = "win"},
+          {"time make -j8 debug", .os = "linux"},
+          {"make", .os = "mac"},
+   },
+ },
+ { .name = "run",
+   .out = "*run*", .footer_panel = true, .save_dirty_files = false, .cursor_at_end = true,
+   .cmd = {
+          {"pushd build & win32_handmade.exe & popd", .os = "win"},
+          {"make -j8", .os = "linux"},
+          {"./game", .os = "mac"},
+   },
+ },
+};
+
+fkey_command[3] = "reload";
+fkey_command[4] = "build";
+fkey_command[5] = "run";

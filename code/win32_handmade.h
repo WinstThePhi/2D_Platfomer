@@ -17,4 +17,11 @@ typedef struct back_buffer
     u32 pitch;
 } back_buffer;
 
+typedef struct game_code
+{
+    HMODULE gameCode_DLL;
+    game_update_and_render* UpdateAndRender;
+    b32 isValid;
+} game_code;
+
 #endif
