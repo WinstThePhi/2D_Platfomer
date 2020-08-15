@@ -68,7 +68,7 @@ typedef struct game_back_buffer
 {
     u16 width;
     u16 height;
-    void* bitmapMemory;
+    void* memory;
     u32 bytesPerPixel;
     u32 pitch;
 } game_back_buffer;
@@ -83,7 +83,7 @@ typedef struct game_keyboard_input
 {
     union
     {
-        game_button_state buttons[10];
+        game_button_state buttons[11];
         struct
         {
             game_button_state moveUp;
@@ -98,6 +98,8 @@ typedef struct game_keyboard_input
             
             game_button_state leftShoulder;
             game_button_state rightShoulder;
+            
+            game_button_state jump;
         };
     };
 } game_keyboard_input;
@@ -127,7 +129,57 @@ typedef struct game_state
 {
     u16 xOffset;
     u16 yOffset;
+    
+    u16 playerX;
+    u16 playerY;
+    
+    f32 yVel;
+    
 } game_state;
+
+typedef enum keyboard_keys
+{
+    KEY_W,
+    KEY_A,
+    KEY_S,
+    KEY_D,
+    KEY_Q,
+    KEY_E,
+    KEY_UP,
+    KEY_LEFT,
+    KEY_DOWN,
+    KEY_RIGHT,
+    KEY_ESC,
+    KEY_SPACE
+} keyboard_keys;
+
+typedef struct key_state
+{
+    b32 isDown;
+    u32 pressCount;
+} key_state;
+
+typedef struct keyboard_input
+{
+    key_state key[sizeof(keyboard_keys)];
+} keyboard_input;
+
+inline void
+Win32PushKeyDown(keyboard_input* keyboard, 
+                 keyboard_keys key)
+{
+    if(!keyboard->key[key].isDown)
+        keyboard->key[key].isDown = true;
+    ++keyboard->key[key].pressCount;
+}
+
+inline void
+Win32PushKeyUp(keyboard_input* keyboard,
+               keyboard_keys key)
+{
+    if(keyboard->key[key].isDown)
+        keyboard->key[key].isDown = false;
+}
 
 inline game_keyboard_input* 
 GetController(game_input* input, u8 controllerIndex)
@@ -137,7 +189,15 @@ GetController(game_input* input, u8 controllerIndex)
     return result;
 }
 
-#define GAME_UPDATE_AND_RENDER(name) void name(game_memory* memory, game_input* input, game_back_buffer* backBuffer)
+typedef struct client_dimension
+{
+    u16 width;
+    u16 height;
+} client_dimension;
+
+#define GAME_UPDATE_AND_RENDER(name) \
+void name(game_memory* memory, keyboard_input* input, game_back_buffer* backBuffer, client_dimension dimension)
+
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 
 GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub)
@@ -146,5 +206,15 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub)
 
 extern "C" 
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender);
+
+typedef union v3
+{
+    struct
+    {
+        u8 r;
+        u8 g;
+        u8 b;
+    };
+} v3;
 
 #endif

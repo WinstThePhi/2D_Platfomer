@@ -10,13 +10,33 @@
 global b8 isRunning;
 global back_buffer globalBackBuffer;
 
+inline FILETIME
+Win32GetLastWriteTime(char* filename)
+{
+    FILETIME lastWriteTime  = {0};
+    
+    WIN32_FIND_DATA findData; 
+    HANDLE fileHandle = FindFirstFileA(filename, &findData);
+    
+    if(fileHandle != INVALID_HANDLE_VALUE)
+    {
+        lastWriteTime = findData.ftLastWriteTime;
+        FindClose(fileHandle);
+    }
+    
+    return lastWriteTime;
+}
+
 internal game_code
-Win32LoadGameCode()
+Win32LoadGameCode(char* filename)
 {
     game_code result = {0};
+    char* tempDLLName = "handmade_temp.dll";
     
-    CopyFile("handmade.dll", "handmade_temp.dll", FALSE);
-    result.gameCode_DLL = LoadLibraryA("handmade_temp.dll");
+    result.lastWriteTime = Win32GetLastWriteTime(filename);
+    
+    CopyFile(filename, tempDLLName, FALSE);
+    result.gameCode_DLL = LoadLibraryA(tempDLLName);
     if(result.gameCode_DLL)
     {
         result.UpdateAndRender = 
@@ -28,6 +48,7 @@ Win32LoadGameCode()
     {
         result.UpdateAndRender = GameUpdateAndRenderStub;
     }
+    
     return result;
 }
 
@@ -187,15 +208,23 @@ Win32UpdateWindow(HDC deviceContext,
                   back_buffer* backBuffer, 
                   u16 width, u16 height)
 {
+    i32 offsetX = 10;
+    i32 offsetY = 10;
+    
     StretchDIBits(deviceContext,
-                  0, 0, width, height,
+                  offsetX, offsetY, backBuffer->width, backBuffer->height,
                   0, 0, backBuffer->width, backBuffer->height,
                   backBuffer->bitmapMemory,
                   &backBuffer->bitmapInfo,
                   DIB_RGB_COLORS,
                   SRCCOPY);
+    
+    PatBlt(deviceContext, 0, 0, width, offsetY, BLACKNESS);
+    PatBlt(deviceContext, 0, (offsetY + backBuffer->height), width, height, BLACKNESS);
+    PatBlt(deviceContext, 0, 0, offsetX, height, BLACKNESS);
+    PatBlt(deviceContext, (offsetX + backBuffer->width), 0, width, height, BLACKNESS);
 }
-
+#if 0
 internal void
 Win32ProcessKeyboardMessage(game_button_state* state, b32 isDown)
 {
@@ -203,6 +232,7 @@ Win32ProcessKeyboardMessage(game_button_state* state, b32 isDown)
     state->endedDown = isDown;
     ++state->halfTransitionCount;
 }
+#endif
 
 internal LRESULT CALLBACK
 Win32MainWindowCallback(HWND window, 
@@ -244,7 +274,7 @@ Win32MainWindowCallback(HWND window,
 }
 
 internal void
-Win32ProcessMessageQueue(HWND window, game_keyboard_input* keyboard)
+Win32ProcessMessageQueue(HWND window, keyboard_input* keyboard)
 {
     MSG message;
     while (PeekMessage(&message, window, 0, 0, PM_REMOVE))
@@ -256,79 +286,124 @@ Win32ProcessMessageQueue(HWND window, game_keyboard_input* keyboard)
                 isRunning = 0;
             } break;
             case WM_SYSKEYDOWN:
-            case WM_SYSKEYUP:
             case WM_KEYDOWN:
-            case WM_KEYUP:
             {
                 u32 VKcode = (u32)message.wParam;
+                
                 b32 wasDown = ((message.lParam & (1 << 30)) != 0);
                 b32 isDown = ((message.lParam & (1 << 31)) == 0);
-                if (isDown != wasDown)
+                if (VKcode == 'W')
                 {
-                    if (VKcode == 'W')
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->moveUp), isDown);
-                    }
-                    else if (VKcode == 'A')
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->moveLeft), isDown);
-                    }
-                    else if (VKcode == 'S')
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->moveDown), isDown);
-                    }
-                    else if (VKcode == 'D')
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->moveRight), isDown);
-                    }
-                    else if (VKcode == 'Q')
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->leftShoulder), isDown);
-                    }
-                    else if (VKcode == 'E')
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->rightShoulder), isDown);
-                    }
-                    else if (VKcode == VK_UP)
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->actionUp), isDown);
-                    }
-                    else if (VKcode == VK_LEFT)
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->actionLeft), isDown);
-                    }
-                    else if (VKcode == VK_DOWN)
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->actionDown), isDown);
-                    }
-                    else if (VKcode == VK_RIGHT)
-                    {
-                        Win32ProcessKeyboardMessage(&(keyboard->actionRight), isDown);
-                    }
-                    else if (VKcode == VK_ESCAPE)
-                    {
-                        isRunning = 0;
-#if 0
-                        if(isDown)
-                        {
-                            OutputDebugStringA("isDown");
-                        }
-                        else if(wasDown)
-                        {
-                            OutputDebugStringA("wasDown");
-                        }
-#endif
-                    }
-                    else if (VKcode == VK_SPACE)
-                    {
-                        
-                    }
+                    Win32PushKeyDown(keyboard, KEY_W);
+                }
+                else if (VKcode == 'A')
+                {
+                    Win32PushKeyDown(keyboard, KEY_A);
+                }
+                else if (VKcode == 'S')
+                {
+                    Win32PushKeyDown(keyboard, KEY_S);
+                }
+                else if (VKcode == 'D')
+                {
+                    Win32PushKeyDown(keyboard, KEY_D);
+                }
+                else if (VKcode == 'Q')
+                {
+                    Win32PushKeyDown(keyboard, KEY_Q);
+                }
+                else if (VKcode == 'E')
+                {
+                    Win32PushKeyDown(keyboard, KEY_E);
+                }
+                else if (VKcode == VK_UP)
+                {
+                    Win32PushKeyDown(keyboard, KEY_UP);
+                }
+                else if (VKcode == VK_LEFT)
+                {
+                    Win32PushKeyDown(keyboard, KEY_LEFT);
+                }
+                else if (VKcode == VK_DOWN)
+                {
+                    Win32PushKeyDown(keyboard, KEY_DOWN);
+                }
+                else if (VKcode == VK_RIGHT)
+                {
+                    Win32PushKeyDown(keyboard, KEY_RIGHT);
+                }
+                else if (VKcode == VK_ESCAPE)
+                {
+                    isRunning = 0;
+                }
+                else if (VKcode == VK_SPACE)
+                {
+                    Win32PushKeyDown(keyboard, KEY_SPACE);
                 }
                 
                 b32 altKeyDown = (message.lParam & (1 << 29));
                 if (VKcode == VK_F4 && altKeyDown)
                 {
                     isRunning = 0;
+                }
+            } break;
+            case WM_SYSKEYUP:
+            case WM_KEYUP:
+            {
+                u32 VKcode = (u32)message.wParam;
+                
+                b32 wasDown = ((message.lParam & (1 << 30)) != 0);
+                b32 isDown = ((message.lParam & (1 << 31)) == 0);
+                if ((isDown != wasDown))
+                {
+                    if (VKcode == 'W')
+                    {
+                        Win32PushKeyUp(keyboard, KEY_W);
+                    }
+                    else if (VKcode == 'A')
+                    {
+                        Win32PushKeyUp(keyboard, KEY_A);
+                    }
+                    else if (VKcode == 'S')
+                    {
+                        Win32PushKeyUp(keyboard, KEY_S);
+                    }
+                    else if (VKcode == 'D')
+                    {
+                        Win32PushKeyUp(keyboard, KEY_D);
+                    }
+                    else if (VKcode == 'Q')
+                    {
+                        Win32PushKeyUp(keyboard, KEY_Q);
+                    }
+                    else if (VKcode == 'E')
+                    {
+                        Win32PushKeyUp(keyboard, KEY_E);
+                    }
+                    else if (VKcode == VK_UP)
+                    {
+                        Win32PushKeyUp(keyboard, KEY_UP);
+                    }
+                    else if (VKcode == VK_LEFT)
+                    {
+                        Win32PushKeyUp(keyboard, KEY_LEFT);
+                    }
+                    else if (VKcode == VK_DOWN)
+                    {
+                        Win32PushKeyUp(keyboard, KEY_DOWN);
+                    }
+                    else if (VKcode == VK_RIGHT)
+                    {
+                        Win32PushKeyUp(keyboard, KEY_RIGHT);
+                    }
+                    else if (VKcode == VK_ESCAPE)
+                    {
+                        isRunning = 0;
+                    }
+                    else if (VKcode == VK_SPACE)
+                    {
+                        Win32PushKeyUp(keyboard, KEY_SPACE);
+                    }
                 }
             } break;
             default:
@@ -357,6 +432,8 @@ int WinMain(HINSTANCE hInstance,
             LPSTR lpCmdLine, 
             int nShowCmd)
 {
+    setvbuf(stdout, 0, _IONBF, 0);
+    
     LARGE_INTEGER performanceFrequencyResult;
     QueryPerformanceFrequency(&performanceFrequencyResult);
     i64 performanceFrequency = performanceFrequencyResult.QuadPart;
@@ -399,7 +476,7 @@ int WinMain(HINSTANCE hInstance,
             QueryPerformanceCounter(&lastCounter);
             
             game_back_buffer gameBackBuffer = {};
-            gameBackBuffer.bitmapMemory = globalBackBuffer.bitmapMemory;
+            gameBackBuffer.memory = globalBackBuffer.bitmapMemory;
             gameBackBuffer.bytesPerPixel = globalBackBuffer.bytesPerPixel;
             gameBackBuffer.pitch = globalBackBuffer.pitch;
             gameBackBuffer.width = globalBackBuffer.width;
@@ -432,16 +509,25 @@ int WinMain(HINSTANCE hInstance,
                 memory.permanentStorageSize;
             u32 counter = 0;
             
-            game_code gameCode = Win32LoadGameCode();
-			if (memory.permanentStorage && memory.transientStorage)
+            char* gameDLLName = "handmade.dll";
+            
+            game_code gameCode = Win32LoadGameCode(gameDLLName);
+			
+            keyboard_input keyboardInput = {};
+            
+            if (memory.permanentStorage && memory.transientStorage)
             {
 				while (isRunning)
 				{
-                    if(counter++ > 120)
+                    FILETIME currentWriteTime = Win32GetLastWriteTime(gameDLLName);
+                    
+                    if(CompareFileTime(&(gameCode.lastWriteTime), &currentWriteTime) != 0)
                     {
                         Win32UnloadGameCode(&gameCode);
-                        gameCode = Win32LoadGameCode();
+                        Sleep(50);
+                        gameCode = Win32LoadGameCode(gameDLLName);
                     }
+                    
                     game_keyboard_input* oldKeyboardState = 
                         GetController(oldGameInput, 0);
 					game_keyboard_input* newKeyboardState = 
@@ -458,14 +544,15 @@ int WinMain(HINSTANCE hInstance,
                             = oldKeyboardState->buttons[buttonIndex].endedDown;
                     }
                     
-                    Win32ProcessMessageQueue(window, newKeyboardState);
-                    
-					gameCode.UpdateAndRender(&memory,
-                                             newGameInput,
-                                             &gameBackBuffer);
+                    Win32ProcessMessageQueue(window, &keyboardInput);
                     
 					HDC hdc = GetDC(window);
 					client_dimension dimension = GetClientDimension(window);
+                    
+                    gameCode.UpdateAndRender(&memory,
+                                             &keyboardInput,
+                                             &gameBackBuffer, 
+                                             dimension);
                     
 					Win32UpdateWindow(hdc,
 									  &globalBackBuffer,

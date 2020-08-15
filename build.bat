@@ -7,7 +7,7 @@ REM sum defines
 set defines=/DHANDMADE_INTERNAL=1 /DHANDMADE_SLOW=1
 
 REM compiler flags
-set compilerFlags=/EHa /GR /Zi /FC /nologo
+set compilerFlags=/EHa /GR /Zi /FC /nologo /O2
 
 REM libs
 set libs=user32.lib gdi32.lib 
