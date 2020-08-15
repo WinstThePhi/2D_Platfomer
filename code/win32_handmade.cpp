@@ -10,6 +10,23 @@
 global b8 isRunning;
 global back_buffer globalBackBuffer;
 
+internal void
+Win32PushKeyDown(keyboard_input* keyboard, 
+                 keyboard_keys key)
+{
+    if(!keyboard->key[key].isDown)
+        keyboard->key[key].isDown = true;
+    ++keyboard->key[key].pressCount;
+}
+
+internal void
+Win32PushKeyUp(keyboard_input* keyboard,
+               keyboard_keys key)
+{
+    if(keyboard->key[key].isDown)
+        keyboard->key[key].isDown = false;
+}
+
 inline FILETIME
 Win32GetLastWriteTime(char* filename)
 {
@@ -292,59 +309,62 @@ Win32ProcessMessageQueue(HWND window, keyboard_input* keyboard)
                 
                 b32 wasDown = ((message.lParam & (1 << 30)) != 0);
                 b32 isDown = ((message.lParam & (1 << 31)) == 0);
-                if (VKcode == 'W')
+                if(wasDown != isDown)
                 {
-                    Win32PushKeyDown(keyboard, KEY_W);
-                }
-                else if (VKcode == 'A')
-                {
-                    Win32PushKeyDown(keyboard, KEY_A);
-                }
-                else if (VKcode == 'S')
-                {
-                    Win32PushKeyDown(keyboard, KEY_S);
-                }
-                else if (VKcode == 'D')
-                {
-                    Win32PushKeyDown(keyboard, KEY_D);
-                }
-                else if (VKcode == 'Q')
-                {
-                    Win32PushKeyDown(keyboard, KEY_Q);
-                }
-                else if (VKcode == 'E')
-                {
-                    Win32PushKeyDown(keyboard, KEY_E);
-                }
-                else if (VKcode == VK_UP)
-                {
-                    Win32PushKeyDown(keyboard, KEY_UP);
-                }
-                else if (VKcode == VK_LEFT)
-                {
-                    Win32PushKeyDown(keyboard, KEY_LEFT);
-                }
-                else if (VKcode == VK_DOWN)
-                {
-                    Win32PushKeyDown(keyboard, KEY_DOWN);
-                }
-                else if (VKcode == VK_RIGHT)
-                {
-                    Win32PushKeyDown(keyboard, KEY_RIGHT);
-                }
-                else if (VKcode == VK_ESCAPE)
-                {
-                    isRunning = 0;
-                }
-                else if (VKcode == VK_SPACE)
-                {
-                    Win32PushKeyDown(keyboard, KEY_SPACE);
-                }
-                
-                b32 altKeyDown = (message.lParam & (1 << 29));
-                if (VKcode == VK_F4 && altKeyDown)
-                {
-                    isRunning = 0;
+                    if (VKcode == 'W')
+                    {
+                        Win32PushKeyDown(keyboard, KEY_W);
+                    }
+                    else if (VKcode == 'A')
+                    {
+                        Win32PushKeyDown(keyboard, KEY_A);
+                    }
+                    else if (VKcode == 'S')
+                    {
+                        Win32PushKeyDown(keyboard, KEY_S);
+                    }
+                    else if (VKcode == 'D')
+                    {
+                        Win32PushKeyDown(keyboard, KEY_D);
+                    }
+                    else if (VKcode == 'Q')
+                    {
+                        Win32PushKeyDown(keyboard, KEY_Q);
+                    }
+                    else if (VKcode == 'E')
+                    {
+                        Win32PushKeyDown(keyboard, KEY_E);
+                    }
+                    else if (VKcode == VK_UP)
+                    {
+                        Win32PushKeyDown(keyboard, KEY_UP);
+                    }
+                    else if (VKcode == VK_LEFT)
+                    {
+                        Win32PushKeyDown(keyboard, KEY_LEFT);
+                    }
+                    else if (VKcode == VK_DOWN)
+                    {
+                        Win32PushKeyDown(keyboard, KEY_DOWN);
+                    }
+                    else if (VKcode == VK_RIGHT)
+                    {
+                        Win32PushKeyDown(keyboard, KEY_RIGHT);
+                    }
+                    else if (VKcode == VK_ESCAPE)
+                    {
+                        Win32PushKeyDown(keyboard, KEY_ESC);
+                    }
+                    else if (VKcode == VK_SPACE)
+                    {
+                        Win32PushKeyDown(keyboard, KEY_SPACE);
+                    }
+                    
+                    b32 altKeyDown = (message.lParam & (1 << 29));
+                    if (VKcode == VK_F4 && altKeyDown)
+                    {
+                        isRunning = 0;
+                    }
                 }
             } break;
             case WM_SYSKEYUP:
@@ -398,7 +418,7 @@ Win32ProcessMessageQueue(HWND window, keyboard_input* keyboard)
                     }
                     else if (VKcode == VK_ESCAPE)
                     {
-                        isRunning = 0;
+                        Win32PushKeyUp(keyboard, KEY_ESC);
                     }
                     else if (VKcode == VK_SPACE)
                     {

@@ -113,6 +113,14 @@ struct tile_map
     u32* tiles;
 };
 
+struct level_info
+{
+    tile_map tilemap;
+    
+    u16 startingX;
+    u16 startingY;
+};
+
 inline i32
 Truncate_F32ToI32(f32 number)
 {
@@ -131,9 +139,142 @@ IsTileEmpty(tile_map* tilemap, f32 x, f32 y)
        playerTileY >= 0 && playerTileY < tilemap->tileMapCountY)
     {
         u32 tileValue = tilemap->tiles[playerTileY * tilemap->tileMapCountX + playerTileX];
-        isEmpty = (tileValue == 0);
+        isEmpty = (tileValue == 0 || tileValue == 2);
     }
     return isEmpty;
+}
+
+internal b32 
+IsWinningTile(tile_map* tilemap, f32 x, f32 y)
+{
+    b32 isWinningTile = false;
+    
+    u32 playerTileX = Truncate_F32ToI32((x - tilemap->upperLeftX) / tilemap->tileWidth);
+    u32 playerTileY = Truncate_F32ToI32((y - tilemap->upperLeftY) / tilemap->tileHeight); 
+    
+    if(playerTileX >= 0 && playerTileX < tilemap->tileMapCountX &&
+       playerTileY >= 0 && playerTileY < tilemap->tileMapCountY)
+    {
+        u32 tileValue = tilemap->tiles[playerTileY * tilemap->tileMapCountX + playerTileX];
+        isWinningTile = (tileValue == 2);
+    }
+    return isWinningTile;
+}
+
+internal b32 
+IsDeathTile(tile_map* tilemap, f32 x, f32 y)
+{
+    b32 isDeathTile = false;
+    
+    u32 playerTileX = Truncate_F32ToI32((x - tilemap->upperLeftX) / tilemap->tileWidth);
+    u32 playerTileY = Truncate_F32ToI32((y - tilemap->upperLeftY) / tilemap->tileHeight); 
+    
+    if(playerTileX >= 0 && playerTileX < tilemap->tileMapCountX &&
+       playerTileY >= 0 && playerTileY < tilemap->tileMapCountY)
+    {
+        u32 tileValue = tilemap->tiles[playerTileY * tilemap->tileMapCountX + playerTileX];
+        isDeathTile = (tileValue == 3);
+    }
+    return isDeathTile;
+}
+
+#define TILEMAP_WIDTH 16
+#define TILEMAP_HEIGHT 9
+#define TILE_WIDTH 75
+#define TILE_HEIGHT 75
+
+global u32 tilemap1Data[TILEMAP_HEIGHT][TILEMAP_WIDTH] = 
+{
+    {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+    {1, 0, 0, 0,  0, 1, 1, 0,  0, 1, 1, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 0,  0, 0, 0, 2},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 2},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 1, 1, 0,  0, 1, 1, 0,  0, 1, 0, 1},
+    {1, 0, 0, 0,  0, 1, 1, 0,  0, 1, 1, 0,  0, 1, 0, 1},
+    {1, 1, 1, 1,  1, 1, 1, 0,  0, 1, 1, 1,  1, 1, 1, 1},
+};
+
+global u32 tilemap2Data[TILEMAP_HEIGHT][TILEMAP_WIDTH] = 
+{
+    {1, 1, 1, 1,  1, 2, 2, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 1, 1, 1,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 1},
+    {1, 1, 1, 1,  1, 1, 1, 0,  0, 1, 1, 1,  1, 1, 1, 1},
+};
+
+global u32 tilemap3Data[TILEMAP_HEIGHT][TILEMAP_WIDTH] = 
+{
+    {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 1,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0,  0, 2, 0, 1},
+    {1, 1, 1, 1,  1, 1, 3, 3,  3, 3, 3, 3,  3, 2, 3, 1},
+};
+// NOTE(winston): example tilemap
+#if 0
+global u32 tilemap[NUMBERHERE]Data[TILEMAP_HEIGHT][TILEMAP_WIDTH] = 
+{
+    {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+};
+#endif
+
+global u32 tilemap4Data[TILEMAP_HEIGHT][TILEMAP_WIDTH] = 
+{
+    {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+    {2, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {2, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 1, 3, 1},
+    {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1},
+    {1, 1, 1, 0,  0, 1, 0, 0,  1, 0, 0, 1,  0, 0, 0, 1},
+    {1, 3, 3, 3,  3, 3, 3, 3,  3, 3, 3, 3,  3, 3, 3, 1},
+};
+
+internal level_info
+GenerateLevel(u32* tilemapData,
+              u16 startingX,
+              u16 startingY)
+{
+    level_info level = {};
+    
+    level.tilemap.tileWidth = TILE_WIDTH;
+    level.tilemap.tileHeight = TILE_HEIGHT;
+    level.tilemap.upperLeftX = 0;
+    level.tilemap.upperLeftY = 0;
+    level.tilemap.tileMapCountX = TILEMAP_WIDTH;
+    level.tilemap.tileMapCountY = TILEMAP_HEIGHT;
+    level.tilemap.tiles = tilemapData;
+    level.startingX = startingX;
+    level.startingY = startingY;
+    
+    return level;
+}
+
+internal void
+RestartLevel(level_info level, game_state* gameState)
+{
+    gameState->playerX = level.startingX;
+    gameState->playerY = level.startingY;
 }
 
 extern "C" 
@@ -159,50 +300,98 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
         
         gameState->yVel = 0;
         
-        gameState->playerX = 100;
-        gameState->playerY = 100;
+        gameState->playerX = 0;
+        gameState->playerY = 0;
+        
+        gameState->level = 1;
         
         memory->isInitialized = true;
     }
-    
-    tile_map tilemap;
-    
-#define TILEMAP_WIDTH 16
-#define TILEMAP_HEIGHT 9
-    
-    u32 tilemapData[TILEMAP_HEIGHT][TILEMAP_WIDTH] = 
-    {
-        {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
-        {1, 0, 0, 0,  0, 1, 1, 0,  0, 1, 1, 0,  0, 0, 0, 1},
-        {1, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 0,  0, 0, 0, 0},
-        {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
-        {1, 0, 0, 0,  0, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 1},
-        {1, 0, 0, 0,  0, 0, 0, 0,  0, 1, 1, 0,  0, 0, 0, 1},
-        {1, 0, 0, 0,  0, 1, 1, 0,  0, 1, 1, 0,  0, 1, 0, 1},
-        {1, 0, 0, 0,  0, 1, 1, 0,  0, 1, 1, 0,  0, 1, 0, 1},
-        {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
-    };
-    
-    tilemap.tileWidth = 75;
-    tilemap.tileHeight = 75;
-    tilemap.upperLeftX = 0;
-    tilemap.upperLeftY = 0;
-    tilemap.tileMapCountX = TILEMAP_WIDTH;
-    tilemap.tileMapCountY = TILEMAP_HEIGHT;
-    tilemap.tiles = (u32*)tilemapData;
-    
-#define PLAYER_WIDTH 50
-#define PLAYER_HEIGHT 75
     
     local_persist u16 newPlayerX = gameState->playerX;
     local_persist u16 newPlayerY = gameState->playerY;
     local_persist f32 newPlayerYVel;
     local_persist b32 isGravityActive = false;
-    b32 canJump = (!IsTileEmpty(&tilemap, newPlayerX, (f32)(newPlayerY + PLAYER_HEIGHT + 5)) ||
-                   !IsTileEmpty(&tilemap, (f32)(newPlayerX + PLAYER_WIDTH), (f32)(newPlayerY + PLAYER_HEIGHT + 5)));
     
-#define GRAVITY .163f
-#define JUMP_POWER 8
+    local_persist level_info currentLevel = {};
+    local_persist level_info level1 = GenerateLevel((u32*)tilemap1Data, 100, 400);
+    local_persist level_info level2 = GenerateLevel((u32*)tilemap2Data, 100, 400);
+    local_persist level_info level3 = GenerateLevel((u32*)tilemap3Data, 100, 400);
+    local_persist level_info level4 = GenerateLevel((u32*)tilemap4Data, 100, 400);
+    
+    local_persist b32 changeLevel = true;
+    
+    if(changeLevel)
+    {
+        switch(gameState->level)
+        {
+            case 1:
+            {
+                currentLevel = level1;
+                newPlayerX = currentLevel.startingX;
+                newPlayerY = currentLevel.startingY;
+            } break;
+            case 2:
+            {
+                currentLevel = level2;
+                newPlayerX = currentLevel.startingX;
+                newPlayerY = currentLevel.startingY;
+            } break;
+            case 3:
+            {
+                currentLevel = level3;
+                newPlayerX = currentLevel.startingX;
+                newPlayerY = currentLevel.startingY;
+            } break;
+            case 4:
+            {
+                currentLevel = level4;
+                newPlayerX = currentLevel.startingX;
+                newPlayerY = currentLevel.startingY;
+            } break;
+            default:
+            {
+                char buffer[50];
+                sprintf_s(buffer, 50, "Level %d not found", (i32)gameState->level);
+                memory->DEBUG_PlatformWriteEntireFile("../data/error_log.txt", sizeof(buffer), buffer);
+            } break;
+        }
+#if 0
+        if(gameState->level == 1)
+        {
+            currentLevel = level1;
+            newPlayerX = currentLevel.startingX;
+            newPlayerY = currentLevel.startingY;
+        }
+        else if(gameState->level == 2)
+        {
+            currentLevel = level2;
+            newPlayerX = currentLevel.startingX;
+            newPlayerY = currentLevel.startingY;
+        }
+        else if(gameState->level == 3)
+        {
+            currentLevel = level3;
+            newPlayerX = currentLevel.startingX;
+            newPlayerY = currentLevel.startingY;
+        }
+#endif
+        changeLevel = false;
+    }
+    
+#define PLAYER_WIDTH 50
+#define PLAYER_HEIGHT 75
+    
+    
+    b32 canJump = (!IsTileEmpty(&currentLevel.tilemap, newPlayerX, (f32)(newPlayerY + PLAYER_HEIGHT + 4)) ||
+                   !IsTileEmpty(&currentLevel.tilemap, (f32)(newPlayerX + PLAYER_WIDTH), (f32)(newPlayerY + PLAYER_HEIGHT + 4)));
+    if(input->key[KEY_ESC].isDown)
+    {
+        RestartLevel(currentLevel, gameState);
+    }
+#define GRAVITY .333f
+#define JUMP_POWER 12
+#define PLAYER_SPEED 7
 #if 1
     if(input->key[KEY_W].isDown && canJump)
     {
@@ -211,21 +400,36 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 #endif
     if(input->key[KEY_A].isDown)
     {
-        newPlayerX -= 4;
+        newPlayerX -= PLAYER_SPEED;
     }
     if(input->key[KEY_D].isDown)
     {
-        newPlayerX += 4;
+        newPlayerX += PLAYER_SPEED;
     }
-#if 0
-    if(input->key[KEY_S].isDown)
-    {
-        newPlayerY += 4;
-    }
-#endif
     if(input->key[KEY_SPACE].isDown && canJump)
     {
         newPlayerYVel = -1 * JUMP_POWER;
+    }
+    if(input->key[KEY_UP].isDown && canJump)
+    {
+        newPlayerYVel = -1 * JUMP_POWER;
+    }
+    if(input->key[KEY_LEFT].isDown)
+    {
+        newPlayerX -= PLAYER_SPEED;
+    }
+    if(input->key[KEY_RIGHT].isDown)
+    {
+        newPlayerX += PLAYER_SPEED;
+    }
+    
+    if(input->key[KEY_RIGHT].isDown && input->key[KEY_D].isDown)
+    {
+        newPlayerX -= PLAYER_SPEED;
+    }
+    if(input->key[KEY_LEFT].isDown && input->key[KEY_A].isDown)
+    {
+        newPlayerX += PLAYER_SPEED;
     }
     
     if(isGravityActive)
@@ -237,36 +441,84 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     {
         for(i32 column = 0; column < 16; ++column)
         {
-            u32 tileID = tilemapData[row][column];
+            //u32 tileID = tilemap.tiles[row][column];
+            u32 tileID = currentLevel.tilemap.tiles[column + row * currentLevel.tilemap.tileMapCountX];
             u32 color = 0xff808080;
             
-            if(tileID)
+            switch(tileID)
+            {
+                case 1:
+                {
+                    color = 0xff6a0dad;
+                } break;
+                case 2:
+                {
+                    color = 0xffffff00;
+                } break;
+                case 3:
+                {
+                    color = 0xffff0000;
+                } break;
+            }
+#if 0
+            if(tileID == 1)
             {
                 //color = 0xffffffff;
                 color = 0xffa9ba9d;
             }
+            else if(tileID == 2)
+            {
+                //color = 0xffffffff;
+                color = 0xffffff00;
+            }
+            if(tileID == 2)
+            {
+                //color = 0xffffffff;
+                color = 0xffffff00;
+            }
+#endif
+            f32 x = 
+                currentLevel.tilemap.upperLeftX + 
+                (column * currentLevel.tilemap.tileWidth);
+            f32 y = currentLevel.tilemap.upperLeftY + 
+                (row * currentLevel.tilemap.tileWidth);
             
-            f32 x = tilemap.upperLeftX + (column * tilemap.tileWidth);
-            f32 y = tilemap.upperLeftY + (row * tilemap.tileWidth);
-            
-            RenderRectangle(backBuffer, (u16)x, (u16)y, (u16)tilemap.tileWidth, (u16)tilemap.tileHeight, color);
+            RenderRectangle(backBuffer, (u16)x, (u16)y, (u16)currentLevel.tilemap.tileWidth, (u16)currentLevel.tilemap.tileHeight, color);
         }
     }
     
     newPlayerY += (u16)newPlayerYVel;
     
-    if(IsTileEmpty(&tilemap, newPlayerX, newPlayerY) &&
-       IsTileEmpty(&tilemap, (f32)(newPlayerX + PLAYER_WIDTH - 1), newPlayerY) &&
-       IsTileEmpty(&tilemap, newPlayerX, (f32)(newPlayerY + PLAYER_HEIGHT - 1)) &&
-       IsTileEmpty(&tilemap, (f32)(newPlayerX + PLAYER_WIDTH), (f32)(newPlayerY + PLAYER_HEIGHT - 1)))
+    if(IsTileEmpty(&currentLevel.tilemap, newPlayerX, newPlayerY) &&
+       IsTileEmpty(&currentLevel.tilemap, (f32)(newPlayerX + PLAYER_WIDTH), newPlayerY) &&
+       IsTileEmpty(&currentLevel.tilemap, newPlayerX, (f32)(newPlayerY + PLAYER_HEIGHT - 1)) &&
+       IsTileEmpty(&currentLevel.tilemap, (f32)(newPlayerX + PLAYER_WIDTH), (f32)(newPlayerY + PLAYER_HEIGHT - 1)))
     {
         gameState->playerX = newPlayerX;
         gameState->playerY = newPlayerY;
+        
+        if((newPlayerY + PLAYER_HEIGHT > backBuffer->height - 50))
+        {
+            RestartLevel(currentLevel, gameState);
+        }
         isGravityActive = true;
     }
     else
     {
         isGravityActive = false;
+    }
+    
+    if(IsDeathTile(&currentLevel.tilemap, newPlayerX, newPlayerY) ||
+       IsDeathTile(&currentLevel.tilemap, (f32)(newPlayerX + PLAYER_WIDTH - 3), newPlayerY) ||
+       IsDeathTile(&currentLevel.tilemap, newPlayerX, (f32)(newPlayerY + PLAYER_HEIGHT + 3)) ||
+       IsDeathTile(&currentLevel.tilemap, (f32)(newPlayerX + PLAYER_WIDTH - 3), (f32)(newPlayerY + PLAYER_HEIGHT) + 3))
+    {
+        RestartLevel(currentLevel, gameState);
+    }
+    else if(IsWinningTile(&currentLevel.tilemap, gameState->playerX, gameState->playerY))
+    {
+        ++gameState->level;
+        changeLevel = true;
     }
     
     newPlayerX = gameState->playerX;
@@ -275,5 +527,5 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     // NOTE(winston): Player Render
     RenderRectangle(backBuffer, 
                     gameState->playerX, gameState->playerY, 
-                    PLAYER_WIDTH, PLAYER_HEIGHT, 0xffffff00);
+                    PLAYER_WIDTH, PLAYER_HEIGHT, 0xff0000ff);
 }

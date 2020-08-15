@@ -1,6 +1,6 @@
 @echo off
 
-REM variable setting
+REM warnings setting
 set warnings=/WX /W4 /wd4201 /wd4100 /wd4189
 
 REM sum defines

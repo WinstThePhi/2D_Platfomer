@@ -135,6 +135,7 @@ typedef struct game_state
     
     f32 yVel;
     
+    u16 level;
 } game_state;
 
 typedef enum keyboard_keys
@@ -161,25 +162,8 @@ typedef struct key_state
 
 typedef struct keyboard_input
 {
-    key_state key[sizeof(keyboard_keys)];
+    key_state key[12];
 } keyboard_input;
-
-inline void
-Win32PushKeyDown(keyboard_input* keyboard, 
-                 keyboard_keys key)
-{
-    if(!keyboard->key[key].isDown)
-        keyboard->key[key].isDown = true;
-    ++keyboard->key[key].pressCount;
-}
-
-inline void
-Win32PushKeyUp(keyboard_input* keyboard,
-               keyboard_keys key)
-{
-    if(keyboard->key[key].isDown)
-        keyboard->key[key].isDown = false;
-}
 
 inline game_keyboard_input* 
 GetController(game_input* input, u8 controllerIndex)
